@@ -10,6 +10,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
 
+
 from config.settings import (
     SPOTIPY_CLIENT_ID,
     SPOTIPY_CLIENT_SECRET,
@@ -21,6 +22,9 @@ from analysis.analyzer           import analyze
 from analysis.color_identity     import get_color_identity
 from analysis.animal_personality import get_animal_personality
 from visualization.plotter       import plot_energy_curves
+# Initialize database tables when app starts
+from database.db_handler import save_user, save_tracks, save_listening_history, get_all_tracks, init_db
+init_db()
 
 app = Flask(
     __name__,
@@ -50,6 +54,7 @@ def get_spotify_oauth():
 
 @app.route("/")
 def index():
+    session.clear()  # Clear any previous user's session
     return render_template("index.html")
 
 
@@ -164,4 +169,5 @@ def test():
 
 
 if __name__ == "__main__":
+    init_db()
     app.run(debug=True, port=5000, host="0.0.0.0")

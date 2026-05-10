@@ -1,57 +1,88 @@
 # database/db_handler.py
-# This file handles everything related to saving and reading from MySQL
+# Now using SQLite instead of MySQL
+# SQLite stores everything in a single file — no server needed!
 
-import mysql.connector
-from config.settings import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
-from datetime import datetime   
+import sqlite3
+import os
+import pandas as pd
+
+# Database file will be created automatically in the project root
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "music_analyzer.db")
 
 
 def get_connection():
-    """Opens a connection to your MySQL database."""
-    connection = mysql.connector.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME
-    )
-    return connection
+    """Opens a connection to the SQLite database file."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    """
+    Creates all tables if they don't exist yet.
+    This runs automatically every time the app starts.
+    """
+    conn   = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id  TEXT PRIMARY KEY,
+            username TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tracks (
+            track_id   TEXT PRIMARY KEY,
+            track_name TEXT NOT NULL,
+            artist     TEXT NOT NULL,
+            energy     REAL,
+            valence    REAL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS listening_history (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id   TEXT,
+            track_id  TEXT,
+            played_at TEXT,
+            FOREIGN KEY (user_id)  REFERENCES users(user_id),
+            FOREIGN KEY (track_id) REFERENCES tracks(track_id)
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+    print(" Database initialized!")
 
 
 def save_user(user):
-    """
-    Saves your Spotify profile to the users table.
-    If you already exist in the table, it skips — no duplicates.
-    """
+    """Saves user to database. Skips if already exists."""
     conn   = get_connection()
     cursor = conn.cursor()
 
-    query = """
-        INSERT IGNORE INTO users (user_id, username)
-        VALUES (%s, %s)
-    """
-    cursor.execute(query, (user["user_id"], user["username"]))
+    cursor.execute("""
+        INSERT OR IGNORE INTO users (user_id, username)
+        VALUES (?, ?)
+    """, (user["user_id"], user["username"]))
 
     conn.commit()
-    cursor.close()
     conn.close()
-    print(f" User '{user['username']}' saved to database.")
+    print(f" User '{user['username']}' saved.")
 
 
 def save_tracks(tracks):
-    """
-    Saves each unique track to the tracks table.
-    If a track already exists, it skips — no duplicates.
-    """
+    """Saves unique tracks. Skips duplicates."""
     conn   = get_connection()
     cursor = conn.cursor()
 
-    query = """
-        INSERT IGNORE INTO tracks (track_id, track_name, artist, energy, valence)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-
     for track in tracks:
-        cursor.execute(query, (
+        cursor.execute("""
+            INSERT OR IGNORE INTO tracks (track_id, track_name, artist, energy, valence)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
             track["track_id"],
             track["track_name"],
             track["artist"],
@@ -60,54 +91,38 @@ def save_tracks(tracks):
         ))
 
     conn.commit()
-    cursor.close()
     conn.close()
-    print(f" {len(tracks)} tracks saved to database.")
+    print(f" {len(tracks)} tracks saved.")
 
 
 def save_listening_history(user_id, tracks):
-    """
-    Saves every play event to listening_history.
-    Converts Spotify's timestamp format to MySQL's format first.
-    Same song played 5 times = 5 rows saved.
-    """
+    """Saves every play event with timestamp."""
+    from datetime import datetime
+
     conn   = get_connection()
     cursor = conn.cursor()
 
-    query = """
-        INSERT INTO listening_history (user_id, track_id, played_at)
-        VALUES (%s, %s, %s)
-    """
-
     for track in tracks:
-        # Convert '2026-05-08T15:10:11.930Z' → '2026-05-08 15:10:11'
-        raw_time    = track["played_at"]
-        clean_time  = datetime.strptime(raw_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+        raw_time   = track["played_at"]
+        clean_time = datetime.strptime(raw_time, "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        cursor.execute(query, (
-            user_id,
-            track["track_id"],
-            clean_time
-        ))
+        cursor.execute("""
+            INSERT INTO listening_history (user_id, track_id, played_at)
+            VALUES (?, ?, ?)
+        """, (user_id, track["track_id"], clean_time.strftime("%Y-%m-%d %H:%M:%S")))
 
     conn.commit()
-    cursor.close()
     conn.close()
-    print(f" {len(tracks)} listening events saved to history.")
+    print(f" {len(tracks)} listening events saved.")
 
 
 def get_all_tracks(user_id=None):
-    """
-    Fetches tracks from MySQL for a specific user.
-    If no user_id given, fetches all tracks.
-    """
-    import pandas as pd
-
-    conn  = get_connection()
+    """Loads tracks from database into a pandas DataFrame."""
+    conn = get_connection()
 
     if user_id:
         query = """
-            SELECT 
+            SELECT
                 t.track_id,
                 t.track_name,
                 t.artist,
@@ -116,12 +131,12 @@ def get_all_tracks(user_id=None):
                 lh.played_at
             FROM tracks t
             JOIN listening_history lh ON t.track_id = lh.track_id
-            WHERE lh.user_id = %s
+            WHERE lh.user_id = ?
         """
-        df = pd.read_sql(query, conn, params=(user_id,))
+        df = pd.read_sql_query(query, conn, params=(user_id,))
     else:
         query = """
-            SELECT 
+            SELECT
                 t.track_id,
                 t.track_name,
                 t.artist,
@@ -131,20 +146,19 @@ def get_all_tracks(user_id=None):
             FROM tracks t
             JOIN listening_history lh ON t.track_id = lh.track_id
         """
-        df = pd.read_sql(query, conn)
+        df = pd.read_sql_query(query, conn)
 
     conn.close()
     return df
 
 
 def get_user():
-    """Fetches your user info from the users table."""
+    """Gets the first user from the database."""
     conn   = get_connection()
-    cursor = conn.cursor(dictionary=True)
-
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM users LIMIT 1")
-    user = cursor.fetchone()
-
-    cursor.close()
+    row = cursor.fetchone()
     conn.close()
-    return user
+    if row:
+        return {"user_id": row["user_id"], "username": row["username"]}
+    return None
