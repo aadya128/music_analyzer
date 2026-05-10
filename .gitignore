@@ -1,0 +1,15 @@
+ 
+# Secret credentials — never upload these!
+.env
+.cache
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Graph images (generated automatically)
+web/static/graphs/
+energy_curves.png
+
+# Virtual environment
+venv/

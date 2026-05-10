@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ username }}'s Music Identity</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="profile-container">
+
+        <!-- Header -->
+        <div class="profile-header">
+            <div class="music-icon">🎵</div>
+            <h1 class="title">{{ username }}'s Music Identity</h1>
+            <p class="subtitle">{{ total_plays }} plays · {{ unique_tracks }} songs · {{ unique_artists }} artists</p>
+        </div>
+
+        <!-- Card 1: Color Identity -->
+        <div class="card" id="card-color">
+            <div class="card-label">COLOR IDENTITY</div>
+            <div class="color-circle" style="background: {{ color|lower }};">
+                {{ color_emoji }}
+            </div>
+            <h2 class="card-title">{{ color }}</h2>
+            <p class="card-text">{{ color_meaning }}</p>
+        </div>
+
+        <!-- Card 2: Animal Personality -->
+        <div class="card" id="card-animal">
+            <div class="card-label">ANIMAL PERSONALITY</div>
+            <div class="animal-emoji">{{ animal_emoji }}</div>
+            <h2 class="card-title">{{ animal }}</h2>
+            <p class="card-text">{{ animal_meaning }}</p>
+        </div>
+
+        <!-- Card 3: Energy Stats -->
+        <div class="card" id="card-stats">
+            <div class="card-label">ENERGY PROFILE</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">{{ avg_energy }}</div>
+                    <div class="stat-label">Avg Energy</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ avg_valence }}</div>
+                    <div class="stat-label">Avg Valence</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ peak_hour }}:00</div>
+                    <div class="stat-label">Peak Hour</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ peak_day[:3] }}</div>
+                    <div class="stat-label">Peak Day</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ replay_ratio }}</div>
+                    <div class="stat-label">Replay Ratio</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ exploration }}</div>
+                    <div class="stat-label">Exploration</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Energy Curve Graph -->
+        <div class="card" id="card-graph">
+            <div class="card-label">LISTENING ENERGY CURVE</div>
+            <img src="{{ graph_url }}" alt="Energy Curve" class="graph-img"/>
+        </div>
+
+        <!-- Footer -->
+        <a href="/" class="spotify-btn" style="margin-top: 16px;">
+            Analyze Again
+        </a>
+
+    </div>
+
+    <!-- Animate cards appearing one by one -->
+    <script>
+        const cards = document.querySelectorAll(".card");
+        cards.forEach((card, i) => {
+            card.style.opacity = 0;
+            card.style.transform = "translateY(30px)";
+            setTimeout(() => {
+                card.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+                card.style.opacity    = 1;
+                card.style.transform  = "translateY(0)";
+            }, 300 + i * 400);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyzing your music...</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="landing-container">
+
+        <div class="spinner"></div>
+
+        <h1 class="title" style="font-size: 28px; margin-top: 32px;">
+            Hey {{ username }}! 👋
+        </h1>
+
+        <p class="subtitle" id="status-text">
+            Fetching your recently played tracks...
+        </p>
+
+        <p class="note">This takes just a few seconds</p>
+
+    </div>
+
+    <script>
+        const messages = [
+            "Fetching your recently played tracks...",
+            "Generating your audio features...",
+            "Discovering your color identity...",
+            "Finding your animal personality...",
+            "Drawing your energy curves...",
+            "Almost ready..."
+        ];
+
+        let i = 0;
+        const el = document.getElementById("status-text");
+
+        setInterval(() => {
+            i = (i + 1) % messages.length;
+            el.style.opacity = 0;
+            setTimeout(() => {
+                el.textContent = messages[i];
+                el.style.opacity = 1;
+            }, 300);
+        }, 1800);
+
+        // Redirect to /analyze after 3 seconds
+        setTimeout(() => {
+            window.location.href = "/analyze";
+        }, 3000);
+    </script>
+
+</body>
+</html>
