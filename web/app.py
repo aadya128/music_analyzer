@@ -2,6 +2,9 @@
 import matplotlib
 matplotlib.use('Agg')
 
+import matplotlib
+from visualization.plotter import plot_energy_curves
+
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
