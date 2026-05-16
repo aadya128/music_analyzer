@@ -1,6 +1,8 @@
-
-
 import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
 from visualization.plotter import plot_energy_curves
 
 import sys, os
