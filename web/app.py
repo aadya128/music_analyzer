@@ -22,7 +22,6 @@ from analysis.analyzer           import analyze
 from analysis.color_identity     import get_color_identity
 from analysis.animal_personality import get_animal_personality
 from visualization.plotter       import plot_energy_curves
-# Initialize database tables when app starts
 from database.db_handler import save_user, save_tracks, save_listening_history, get_all_tracks, init_db
 init_db()
 
@@ -32,14 +31,13 @@ app = Flask(
     static_folder="static"
 )
 
-# Strong secret key so sessions don't leak between users
 app.secret_key = "music_analyzer_2026_fixed"
 from datetime import timedelta
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
-REDIRECT_URI = "https://h899vxh4-5000.inc1.devtunnels.ms/callback"
+REDIRECT_URI = "https://music-analyzerr.onrender.com/callback"
 
 def get_spotify_oauth():
     return SpotifyOAuth(
@@ -54,13 +52,12 @@ def get_spotify_oauth():
 
 @app.route("/")
 def index():
-    session.clear()  # Clear any previous user's session
+    session.clear()
     return render_template("index.html")
 
 
 @app.route("/login")
 def login():
-    # Always clear session before new login
     session.clear()
     oauth    = get_spotify_oauth()
     auth_url = oauth.get_authorize_url()
@@ -74,20 +71,16 @@ def callback():
     if not code:
         return redirect(url_for("index"))
 
-    # Always clear session first
     session.clear()
 
     oauth      = get_spotify_oauth()
     token_info = oauth.get_access_token(code)
 
-    # Get fresh user info directly from Spotify
     sp        = spotipy.Spotify(auth=token_info["access_token"])
     user_data = sp.current_user()
 
-    # Print to CMD so we can verify
     print(f"\n NEW LOGIN: {user_data['display_name']} — {user_data['id']}\n")
 
-    # Save to session
     session["token"]    = token_info["access_token"]
     session["username"] = user_data["display_name"]
     session["user_id"]  = user_data["id"]
@@ -97,7 +90,6 @@ def callback():
 
 @app.route("/analyze")
 def analyze_route():
-    # Read directly from session
     token    = session.get("token")
     username = session.get("username")
     user_id  = session.get("user_id")
@@ -114,7 +106,6 @@ def analyze_route():
         "username": username
     }
 
-    # Fetch and save tracks
     tracks = fetch_recently_played(sp)
     tracks = fetch_audio_features(sp, tracks)
 
@@ -122,7 +113,6 @@ def analyze_route():
     save_tracks(tracks)
     save_listening_history(user["user_id"], tracks)
 
-    # Load from database for this user only
     df = get_all_tracks(user["user_id"])
     df["played_at"] = pd.to_datetime(df["played_at"])
     df["played_at"] = df["played_at"] + pd.Timedelta(hours=5, minutes=30)
@@ -130,32 +120,26 @@ def analyze_route():
     df["weekday"]   = df["played_at"].dt.day_name()
     df["month"]     = df["played_at"].dt.month_name()
 
-        # ── Prepare wave graph data ───────────────────────────
-    # Day view — energy per hour
     hourly = df.groupby("hour")["energy"].mean()
     hourly_energy = [round(hourly.get(h, 0), 3) for h in range(24)]
     hourly_labels = ['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm']
     hourly_energy_slim = [hourly_energy[h] for h in [0,2,4,6,8,10,12,14,16,18,20,22]]
 
-    # Week view — energy per weekday
     day_order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
     weekly = df.groupby("weekday")["energy"].mean().reindex(day_order).fillna(0)
     weekly_energy = [round(v, 3) for v in weekly.values]
     weekly_labels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
-    # Month view — energy per month
     month_order = ["January","February","March","April","May","June",
                 "July","August","September","October","November","December"]
     monthly = df.groupby("month")["energy"].mean().reindex(month_order).dropna()
     monthly_energy = [round(v, 3) for v in monthly.values]
     monthly_labels = [m[:3] for m in monthly.index]
 
-    # Run analysis
     metrics       = analyze(df)
     color_result  = get_color_identity(metrics)
     animal_result = get_animal_personality(metrics)
 
-    # Save graph
     graphs_folder = os.path.join(os.path.dirname(__file__), "static", "graphs")
     os.makedirs(graphs_folder, exist_ok=True)
     graph_path = os.path.join(graphs_folder, f"{user_id}_energy.png")
