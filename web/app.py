@@ -1,12 +1,14 @@
 # web/app.py
-
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use('Agg')
 
-import sys
-import os
-import time
+import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from flask import Flask, render_template, redirect, request, session, url_for
+# ... rest of your imports
+
+import time
 
 from flask import Flask, render_template, redirect, request, session, url_for
 import spotipy
