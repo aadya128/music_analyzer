@@ -1,97 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ username }}'s Music Identity</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ username }}'s Music Identity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <div class="profile-container">
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+<div class="blob b4"></div>
 
-        <!-- Header -->
-        <div class="profile-header">
-            <div class="music-icon">🎵</div>
-            <h1 class="title">{{ username }}'s Music Identity</h1>
-            <p class="subtitle">{{ total_plays }} plays · {{ unique_tracks }} songs · {{ unique_artists }} artists</p>
+<div class="page">
+
+  <div class="profile-header">
+    <div class="section-label"><span>Your identity</span></div>
+    <h2 class="profile-name">{{ username.split()[0] }}<em>{{ username.split()[1] if username.split()|length > 1 else '' }}</em></h2>
+    <p class="profile-stats">
+      <span>{{ total_plays }}</span> plays &nbsp;·&nbsp;
+      <span>{{ unique_tracks }}</span> songs &nbsp;·&nbsp;
+      <span>{{ unique_artists }}</span> artists
+    </p>
+  </div>
+
+  <!-- Color Card -->
+  <div class="card" style="opacity:0; transform: translateY(30px);">
+    <div class="section-label"><span>Color identity</span></div>
+    <div class="color-reveal">
+      <div class="color-orb" style="background: {{ color|lower }};
+        box-shadow: 0 12px 35px {{ 
+          'rgba(192,57,43,0.3), 0 0 0 8px rgba(192,57,43,0.1)' if color == 'Red' else
+          'rgba(241,196,15,0.3), 0 0 0 8px rgba(241,196,15,0.1)' if color == 'Yellow' else
+          'rgba(46,204,113,0.3), 0 0 0 8px rgba(46,204,113,0.1)' if color == 'Green' else
+          'rgba(52,152,219,0.3), 0 0 0 8px rgba(52,152,219,0.1)'
+        }};"></div>
+      <div>
+        <div class="color-name"><em>{{ color }}</em></div>
+        <div class="color-tag">
+          {{ 'High energy' if avg_energy >= 0.5 else 'Low energy' }} ·
+          {{ 'Joyful' if avg_valence >= 0.5 else 'Moody' }}
         </div>
+      </div>
+    </div>
+    <p class="card-desc">{{ color_meaning }}</p>
+  </div>
 
-        <!-- Card 1: Color Identity -->
-        <div class="card" id="card-color">
-            <div class="card-label">COLOR IDENTITY</div>
-            <div class="color-circle" style="background: {{ color|lower }};">
-                {{ color_emoji }}
-            </div>
-            <h2 class="card-title">{{ color }}</h2>
-            <p class="card-text">{{ color_meaning }}</p>
-        </div>
+  <!-- Animal Card -->
+  <div class="card" style="opacity:0; transform: translateY(30px);">
+    <div class="section-label"><span>Animal personality</span></div>
+    <div class="animal-row">
+      <div class="animal-big">{{ animal_emoji }}</div>
+      <div>
+        <div class="animal-label">You are</div>
+        <div class="animal-name"><em>The {{ animal }}</em></div>
+      </div>
+    </div>
+    <p class="card-desc">{{ animal_meaning }}</p>
+    <div class="tags">
+      {% if replay_ratio >= 0.5 %}<span class="tag">Serial replayer</span>{% endif %}
+      {% if exploration >= 0.6 %}<span class="tag">Curious explorer</span>{% endif %}
+      {% if avg_energy >= 0.5 %}<span class="tag">High energy</span>{% else %}<span class="tag">Calm listener</span>{% endif %}
+      {% if avg_valence < 0.5 %}<span class="tag">Moody taste</span>{% else %}<span class="tag">Feel-good vibes</span>{% endif %}
+    </div>
+  </div>
 
-        <!-- Card 2: Animal Personality -->
-        <div class="card" id="card-animal">
-            <div class="card-label">ANIMAL PERSONALITY</div>
-            <div class="animal-emoji">{{ animal_emoji }}</div>
-            <h2 class="card-title">{{ animal }}</h2>
-            <p class="card-text">{{ animal_meaning }}</p>
-        </div>
+  <!-- Stats Card -->
+  <div class="card" style="opacity:0; transform: translateY(30px);">
+    <div class="section-label"><span>Energy profile</span></div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-value">{{ avg_energy }}</div>
+        <div class="stat-label">Energy</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:{{ (avg_energy * 100)|int }}%"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">{{ avg_valence }}</div>
+        <div class="stat-label">Valence</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:{{ (avg_valence * 100)|int }}%"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">{{ peak_hour }}:00</div>
+        <div class="stat-label">Peak hour</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:{{ ((peak_hour / 24) * 100)|int }}%"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">{{ peak_day[:3] }}</div>
+        <div class="stat-label">Peak day</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:60%"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">{{ replay_ratio }}</div>
+        <div class="stat-label">Replay</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:{{ (replay_ratio * 100)|int }}%"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">{{ exploration }}</div>
+        <div class="stat-label">Explore</div>
+        <div class="stat-bar"><div class="stat-fill" style="width:{{ (exploration * 100)|int }}%"></div></div>
+      </div>
+    </div>
+  </div>
 
-        <!-- Card 3: Energy Stats -->
-        <div class="card" id="card-stats">
-            <div class="card-label">ENERGY PROFILE</div>
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-value">{{ avg_energy }}</div>
-                    <div class="stat-label">Avg Energy</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{{ avg_valence }}</div>
-                    <div class="stat-label">Avg Valence</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{{ peak_hour }}:00</div>
-                    <div class="stat-label">Peak Hour</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{{ peak_day[:3] }}</div>
-                    <div class="stat-label">Peak Day</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{{ replay_ratio }}</div>
-                    <div class="stat-label">Replay Ratio</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{{ exploration }}</div>
-                    <div class="stat-label">Exploration</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 4: Energy Curve Graph -->
-        <div class="card" id="card-graph">
-            <div class="card-label">LISTENING ENERGY CURVE</div>
-            <img src="{{ graph_url }}" alt="Energy Curve" class="graph-img"/>
-        </div>
-
-        <!-- Footer -->
-        <a href="/" class="spotify-btn" style="margin-top: 16px;">
-            Analyze Again
-        </a>
-
+  <!-- Wave Graph Card -->
+  <div class="card" style="opacity:0; transform: translateY(30px);">
+    <div class="section-label"><span>Listening energy curve</span></div>
+    <div class="wave-container">
+      <div class="wave-tabs">
+        <div class="wave-tab active" onclick="showWave('day',this)">Day</div>
+        <div class="wave-tab" onclick="showWave('week',this)">Week</div>
+        <div class="wave-tab" onclick="showWave('month',this)">Month</div>
+      </div>
+      <svg class="wave-svg" id="waveSvg" viewBox="0 0 500 120" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#C4895A" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#C4895A" stop-opacity="0.05"/>
+          </linearGradient>
+        </defs>
+        <path id="waveFill" fill="url(#waveGrad)"/>
+        <path id="waveLine" fill="none" stroke="#C4895A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="wave-labels" id="waveLabels"></div>
     </div>
 
-    <!-- Animate cards appearing one by one -->
-    <script>
-        const cards = document.querySelectorAll(".card");
-        cards.forEach((card, i) => {
-            card.style.opacity = 0;
-            card.style.transform = "translateY(30px)";
-            setTimeout(() => {
-                card.style.transition = "opacity 0.6s ease, transform 0.6s ease";
-                card.style.opacity    = 1;
-                card.style.transform  = "translateY(0)";
-            }, 300 + i * 400);
-        });
-    </script>
+    <!-- Static graph image hidden but kept for data reference -->
+    <img src="{{ graph_url }}" style="display:none;" id="graphData"/>
+  </div>
 
+  <div style="text-align:center; margin-top:32px; margin-bottom: 20px;">
+    <a href="/" class="btn-outline">Analyze again</a>
+  </div>
+
+</div>
+
+<script>
+// Real energy data passed from Flask
+const energyData = {
+  day: {
+    values: {{ hourly_energy | tojson }},
+    labels: {{ hourly_labels | tojson }}
+  },
+  week: {
+    values: {{ weekly_energy | tojson }},
+    labels: {{ weekly_labels | tojson }}
+  },
+  month: {
+    values: {{ monthly_energy | tojson }},
+    labels: {{ monthly_labels | tojson }}
+  }
+};
+
+let currentMode = 'day';
+let phase = 0;
+
+function buildPath(values) {
+  const W = 500, H = 120, pad = 10;
+  const n = values.length;
+  if (n < 2) return { line: '', fill: '' };
+  const step = (W - pad*2) / (n - 1);
+  const wobble = 3;
+
+  let pts = values.map((v, i) => {
+    const x = pad + i * step;
+    const w = Math.sin(phase + i * 0.9) * wobble;
+    const y = H - pad - (v * (H - pad*2)) + w;
+    return [x, Math.max(pad, Math.min(H-pad, y))];
+  });
+
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const cx = (pts[i][0] + pts[i+1][0]) / 2;
+    d += ` C ${cx} ${pts[i][1]}, ${cx} ${pts[i+1][1]}, ${pts[i+1][0]} ${pts[i+1][1]}`;
+  }
+  return { line: d, fill: d + ` L ${pts[pts.length-1][0]} ${H} L ${pts[0][0]} ${H} Z` };
+}
+
+function showWave(mode, el) {
+  currentMode = mode;
+  document.querySelectorAll('.wave-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const labels = energyData[mode].labels;
+  document.getElementById('waveLabels').innerHTML =
+    labels.map(l => `<span class="wave-label">${l}</span>`).join('');
+}
+
+function animate() {
+  phase += 0.025;
+  const data = energyData[currentMode];
+  if (data.values.length > 1) {
+    const { line, fill } = buildPath(data.values);
+    document.getElementById('waveLine').setAttribute('d', line);
+    document.getElementById('waveFill').setAttribute('d', fill);
+  }
+  requestAnimationFrame(animate);
+}
+
+showWave('day', document.querySelector('.wave-tab'));
+animate();
+
+// Animate cards in one by one
+document.querySelectorAll('.card').forEach((card, i) => {
+  setTimeout(() => {
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    card.style.opacity = 1;
+    card.style.transform = 'translateY(0)';
+  }, 200 + i * 350);
+});
+</script>
 </body>
 </html>

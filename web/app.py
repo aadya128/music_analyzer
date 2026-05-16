@@ -130,6 +130,26 @@ def analyze_route():
     df["weekday"]   = df["played_at"].dt.day_name()
     df["month"]     = df["played_at"].dt.month_name()
 
+        # ── Prepare wave graph data ───────────────────────────
+    # Day view — energy per hour
+    hourly = df.groupby("hour")["energy"].mean()
+    hourly_energy = [round(hourly.get(h, 0), 3) for h in range(24)]
+    hourly_labels = ['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm']
+    hourly_energy_slim = [hourly_energy[h] for h in [0,2,4,6,8,10,12,14,16,18,20,22]]
+
+    # Week view — energy per weekday
+    day_order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+    weekly = df.groupby("weekday")["energy"].mean().reindex(day_order).fillna(0)
+    weekly_energy = [round(v, 3) for v in weekly.values]
+    weekly_labels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+
+    # Month view — energy per month
+    month_order = ["January","February","March","April","May","June",
+                "July","August","September","October","November","December"]
+    monthly = df.groupby("month")["energy"].mean().reindex(month_order).dropna()
+    monthly_energy = [round(v, 3) for v in monthly.values]
+    monthly_labels = [m[:3] for m in monthly.index]
+
     # Run analysis
     metrics       = analyze(df)
     color_result  = get_color_identity(metrics)
@@ -159,7 +179,13 @@ def analyze_route():
         unique_artists= metrics["unique_artists"],
         replay_ratio  = round(metrics["replay_ratio"], 2),
         exploration   = round(metrics["exploration_score"], 2),
-        graph_url     = graph_url
+        graph_url     = graph_url,
+        hourly_energy  = hourly_energy_slim,
+        hourly_labels  = hourly_labels,
+        weekly_energy  = weekly_energy,
+        weekly_labels  = weekly_labels,
+        monthly_energy = monthly_energy,
+        monthly_labels = monthly_labels,
     )
 
 

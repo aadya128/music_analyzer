@@ -6,13 +6,16 @@ from config import settings
 
 
 def create_spotify_client():
-    """Connects to Spotify using your credentials."""
-    return spotipy.Spotify(auth_manager=SpotifyOAuth(
-        client_id=settings.SPOTIPY_CLIENT_ID,
-        client_secret=settings.SPOTIPY_CLIENT_SECRET,
-        redirect_uri=settings.SPOTIPY_REDIRECT_URI,
-        scope=settings.SPOTIFY_SCOPE
-    ))
+    auth_manager = SpotifyOAuth(
+        client_id=SPOTIPY_CLIENT_ID,
+        client_secret=SPOTIPY_CLIENT_SECRET,
+        redirect_uri=SPOTIPY_REDIRECT_URI,
+        scope=SPOTIFY_SCOPE,
+        cache_path=None,
+        show_dialog=True
+    )
+    client = spotipy.Spotify(auth_manager=auth_manager)
+    return client
 
 
 def get_current_user(sp):
