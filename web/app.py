@@ -1,6 +1,4 @@
-# web/app.py
-import matplotlib
-matplotlib.use('Agg')
+
 
 import matplotlib
 from visualization.plotter import plot_energy_curves
